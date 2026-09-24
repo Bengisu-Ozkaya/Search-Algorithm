@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="style.css">
+    <script src="sudoku.js"></script>
+    <script src="card.js"></script>
+</head>
+
+<body>
+    <div>
+        <button onclick="showSudoku()">Sudoku Çözücü</button>
+        <button onclick="showCard()">Kart Oyunu</button>
+        <button onclick="restartGame()" id="restart-btn" hidden>Tekrar Oyna</button>
+    </div>
+
+    <!-- Sudoku Çözücü -->
+    <div id="sudoku" hidden>
+        <p>Çözdürmek istediğin sudokunu gir ve anında çözelim!</p>
+        <button class="btn" onclick="solveSudoku()">Çözümü Yap</button>
+        <button class="btn" onclick="resetSudoku()">Sıfırla</button>
+
+        <div class="board"> <!-- Bütün Sudoku -->
+
+            <!-- 3x3 Karelerin 1. Satırı -->
+            <div class="cube">
+                <div class="cell"><input id="r00" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r01" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r02" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r10" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r11" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r12" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r20" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r21" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r22" type="text" maxlength="1" inputmode="numeric"></div>
+            </div>
+
+            <div class="cube">
+                <div class="cell"><input id="r03" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r04" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r05" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r13" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r14" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r15" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r23" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r24" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r25" type="text" maxlength="1" inputmode="numeric"></div>
+            </div>
+
+            <div class="cube">
+                <div class="cell"><input id="r06" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r07" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r08" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r16" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r17" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r18" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r26" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r27" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r28" type="text" maxlength="1" inputmode="numeric"></div>
+            </div>
+
+            <!-- 3x3 Karelerin 2. Satırı -->
+            <div class="cube">
+                <div class="cell"><input id="r30" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r31" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r32" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r40" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r41" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r42" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r50" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r51" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r52" type="text" maxlength="1" inputmode="numeric"></div>
+            </div>
+
+            <div class="cube">
+                <div class="cell"><input id="r33" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r34" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r35" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r43" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r44" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r45" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r53" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r54" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r55" type="text" maxlength="1" inputmode="numeric"></div>
+            </div>
+
+            <div class="cube">
+                <div class="cell"><input id="r36" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r37" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r38" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r46" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r47" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r48" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r56" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r57" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r58" type="text" maxlength="1" inputmode="numeric"></div>
+            </div>
+
+            <!-- 3x3 Karelerin 3. Satırı -->
+            <div class="cube">
+                <div class="cell"><input id="r60" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r61" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r62" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r70" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r71" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r72" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r80" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r81" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r82" type="text" maxlength="1" inputmode="numeric"></div>
+            </div>
+
+            <!-- Blok 7 (r70 - r78) -->
+            <div class="cube">
+                <div class="cell"><input id="r63" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r64" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r65" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r73" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r74" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r75" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r83" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r84" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r85" type="text" maxlength="1" inputmode="numeric"></div>
+            </div>
+
+            <!-- Blok 8 (r80 - r88) -->
+            <div class="cube">
+                <div class="cell"><input id="r66" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r67" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r68" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r76" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r77" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r78" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r86" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r87" type="text" maxlength="1" inputmode="numeric"></div>
+                <div class="cell"><input id="r88" type="text" maxlength="1" inputmode="numeric"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kart Oyunu -->
+    <div id="card-game" hidden>
+        <p>Rakibini alt etmek için doğru kartı seç!</p>
+
+        <div class="player-card">
+            <button class="card" id="p-card1" onclick="SetScore1()">1</button>
+            <button class="card" id="p-card2" onclick="SetScore2()">2</button>
+            <button class="card" id="p-card3" onclick="SetScore3()">3</button>
+            <button class="card" id="p-card4" onclick="SetScore4()">4</button>
+        </div>
+
+        <p id="score">SKOR: 0</p>
+
+        <div class="enemy-card">
+            <button class="card" id="e-card1" onclick="SetScore1()">1</button>
+            <button class="card" id="e-card2" onclick="SetScore2()">2</button>
+            <button class="card" id="e-card3" onclick="SetScore3()">3</button>
+            <button class="card" id="e-card4" onclick="SetScore4()">4</button>
+        </div>
+    </div>
+
+</body>
+
+</html>
