@@ -13,35 +13,47 @@ function showCard() {
     cardGame.hidden = !cardGame.hidden
 }
 
-function restartGame(){
-    for (let index = 1; index <= 4; index++) {
-        document.getElementById(`p-card${index}`).style.opacity = "1"
-        document.getElementById(`e-card${index}`).style.opacity = "1"   
-    }
+function restartGame() {
+    const restartBtn = document.getElementById("restart-btn");
+    if (restartBtn) restartBtn.hidden = true;
 
-    document.getElementById("restart-btn").hidden = true
+    score = 0;
+    const scoreElem = document.getElementById("score");
+    if (scoreElem) scoreElem.textContent = "SKOR: " + score;
 
-    score = 0
-    document.getElementById("score").textContent = "SKOR: " + score
-    StartGame()
+    StartGame();
 }
 
 function StartGame() {
     //player için kart
-    playerHand = []
+    playerHand = [];
     for (let index = 0; index < 4; index++) {
-        let random = Math.floor(Math.random() * 10) + 1
-        playerHand.push(random)
+        let random = Math.floor(Math.random() * 10) + 1;
+        playerHand.push(random);
     }
 
     // enemy için kart
-    enemyHand = []
+    enemyHand = [];
     for (let index = 0; index < 4; index++) {
-        let random = Math.floor(Math.random() * 10) + 1
-        enemyHand.push(random)
+        let random = Math.floor(Math.random() * 10) + 1;
+        enemyHand.push(random);
     }
 
-    UploadCard()
+    UploadCard();
+
+    // Kartların dokunulmazlık ve opaklık durumlarını sıfırla
+    for (let index = 1; index <= 4; index++) {
+        const pCard = document.getElementById(`p-card${index}`);
+        const eCard = document.getElementById(`e-card${index}`);
+        if (pCard) {
+            pCard.style.opacity = "1";
+            pCard.disabled = false;
+        }
+        if (eCard) {
+            eCard.style.opacity = "1";
+            eCard.disabled = true; // Rakip kartları oyuncu tarafından tıklanamaz
+        }
+    }
 }
 
 function UploadCard() {
@@ -65,6 +77,7 @@ function SetScore1() {
 
     document.getElementById("score").textContent = `SKOR: ${score}`;
     document.getElementById(`p-card1`).style.opacity = "0.3";
+    document.getElementById(`p-card1`).disabled = true
 
     if (checkGameOver(true)) return;
 
@@ -80,7 +93,7 @@ function SetScore2() {
 
     document.getElementById("score").textContent = `SKOR: ${score}`;
     document.getElementById(`p-card2`).style.opacity = "0.3";
-
+    document.getElementById(`p-card2`).disabled = true
     if (checkGameOver(true)) return;
 
     isEnemyTurn = true
@@ -95,7 +108,8 @@ function SetScore3() {
 
     document.getElementById("score").textContent = `SKOR: ${score}`;
     document.getElementById(`p-card3`).style.opacity = "0.3";
-
+    document.getElementById(`p-card3`).disabled = true
+    
     if (checkGameOver(true)) return;
 
     isEnemyTurn = true
@@ -110,6 +124,7 @@ function SetScore4() {
 
     document.getElementById("score").textContent = `SKOR: ${score}`;
     document.getElementById(`p-card4`).style.opacity = "0.3";
+    document.getElementById(`p-card4`).disabled = true
 
     if (checkGameOver(true)) return;
 
@@ -130,7 +145,7 @@ function EnemyTurn() {
             let simulateScore = score + card;
 
             // Sırayı Oyuncuya devrediyoruz -> false
-            let moveScore = Minimax(simulateScore, playerHand, enemyHand, false);
+            let moveScore = Minimax(simulateScore, playerHand, enemyHand, false, -Infinity, Infinity);
 
             enemyHand[i] = card; // Backtrack
 
@@ -151,25 +166,28 @@ function EnemyTurn() {
         const enemyCardElem = document.getElementById(`e-card${bestCardIndex + 1}`);
         if (enemyCardElem) {
             enemyCardElem.style.opacity = "0.3";
+            enemyCardElem.disabled = true
         }
         document.getElementById("score").textContent = `SKOR: ${score}`;
 
         // Düşman oynadıktan sonra oyun bitti mi kontrol et
         checkGameOver(false); // false: Hamleyi düşman yaptı
     }
+
+    isEnemyTurn = false; // Sıra tekrar oyuncuya geçti
 }
 
-function Minimax(currentScore, pHand, eHand, isEnemyTurn) {
-    if ((currentScore == 21 && isEnemyTurn)) {
+function Minimax(currentScore, pHand, eHand, isEnemyTurn, alfa, beta) {
+    if ((currentScore == target && isEnemyTurn)) {
         return -1 //Yenilgi
     }
-    if ((currentScore == 21 && !isEnemyTurn)) {
+    if ((currentScore == target && !isEnemyTurn)) {
         return 1 //Kazanma
     }
-    if (currentScore > 21 && isEnemyTurn) {
+    if (currentScore > target && isEnemyTurn) {
         return 1 //Kazanma
     }
-    if (currentScore > 21 && !isEnemyTurn) {
+    if (currentScore > target && !isEnemyTurn) {
         return -1 //Yenilgi
     }
 
@@ -183,7 +201,7 @@ function Minimax(currentScore, pHand, eHand, isEnemyTurn) {
 
     if (isEnemyTurn) {
         let maxScore = -Infinity
-        let currentScore = score
+        // let currentScore = score satırı kaldırıldı!
         for (let i = 0; i < eHand.length; i++) {
             if (eHand[i] != null) {
                 let currentCard = eHand[i]
@@ -191,7 +209,7 @@ function Minimax(currentScore, pHand, eHand, isEnemyTurn) {
                 let newScore = currentScore + currentCard
 
                 // Bu kartı seçsem sonuç ne olabilir?
-                let simulated = Minimax(newScore, pHand, eHand, false) //Sırayı oyuncuya veriyoruz false ile
+                let simulated = Minimax(newScore, pHand, eHand, false, alfa, beta) //Sırayı oyuncuya veriyoruz false ile
 
                 eHand[i] = currentCard // Backtrack
 
@@ -199,6 +217,11 @@ function Minimax(currentScore, pHand, eHand, isEnemyTurn) {
                     maxScore = simulated
                 }
 
+                alfa = Math.max(alfa, maxScore); //Enemy'nin garantilediği max puan
+
+                if (beta <= alfa) { //Player'ın kabul ettiği sınırdan daha iyi bir yol bulduysan aramayı bırak ve buraya odaklan
+                    break;
+                }
             }
         }
         return maxScore
@@ -211,12 +234,18 @@ function Minimax(currentScore, pHand, eHand, isEnemyTurn) {
                 let newScore = currentScore + currentCard
 
                 // Bu kartı seçsem sonuç ne olabilir?
-                let simulated = Minimax(newScore, pHand, eHand, true) //Sırayı enemy'ye veriyoruz true ile
+                let simulated = Minimax(newScore, pHand, eHand, true, alfa, beta) //Sırayı enemy'ye veriyoruz true ile
 
                 pHand[i] = currentCard // Backtrack
 
                 if (simulated < minScore) {
                     minScore = simulated
+                }
+
+                beta = Math.min(beta, minScore) //Player'ın garantilediği min puan
+
+                if (beta <= alfa) {
+                    break
                 }
             }
         }
@@ -224,27 +253,42 @@ function Minimax(currentScore, pHand, eHand, isEnemyTurn) {
     }
 }
 
+function disableAllCards() {
+    for (let index = 1; index <= 4; index++) {
+        const pCard = document.getElementById(`p-card${index}`);
+        const eCard = document.getElementById(`e-card${index}`);
+        if (pCard) {
+            pCard.disabled = true;
+            pCard.style.opacity = "0.3";
+        }
+        if (eCard) {
+            eCard.disabled = true;
+            eCard.style.opacity = "0.3";
+        }
+    }
+}
+
 function checkGameOver(lastMoveByPlayer) {
-    // Skor 21
-    if (score === 21) {
+    // Skor Hedefe Ulaştı
+    if (score === target) {
+        disableAllCards();
+        document.getElementById("restart-btn").hidden = false;
         if (lastMoveByPlayer) { // Son hamle oyuncuda
-            alert("Tebrikler! Skoru 21 yaptın ve kazandın!");
-            document.getElementById("restart-btn").hidden = false
+            alert("Tebrikler! Skoru " + target + " yaptın ve kazandın!");
         } else { // Son hamle rakipte
-            alert("Yapay Zekâ skoru 21 yaptı! Kaybettin!");
-            document.getElementById("restart-btn").hidden = false
+            alert("Yapay Zekâ skoru " + target + " yaptı! Kaybettin!");
         }
         return true; // Oyun bitti
     }
 
-    // Skor 21'den büyük
-    if (score > 21) {
+    // Skor Hedef'ten büyük
+    if (score > target) {
+        disableAllCards();
+        document.getElementById("restart-btn").hidden = false;
         if (lastMoveByPlayer) {  // Son hamle oyuncuda
-            alert(`Skor ${score} oldu! 21'i aştığın için kaybettin!`);
-            document.getElementById("restart-btn").hidden = false
+            alert(`Skor ${score} oldu! ${target}'i aştığın için kaybettin!`);
         } else {
             alert(`Yapay zekâ skoru ${score} yaptı ve patladı! Sen kazandın!`);
-            document.getElementById("restart-btn").hidden = false
         }
         return true; // Oyun bitti
     }
@@ -254,6 +298,8 @@ function checkGameOver(lastMoveByPlayer) {
     let eCardsLeft = enemyHand.some(card => card !== null); // Rakibin elinde kart kaldı mı
 
     if (!pCardsLeft && !eCardsLeft) {
+        disableAllCards();
+        document.getElementById("restart-btn").hidden = false;
         alert("Atılacak kart kalmadı! Oyun berabere bitti.");
         return true; // Oyun bitti
     }
