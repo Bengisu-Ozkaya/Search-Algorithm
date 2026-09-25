@@ -1,27 +1,29 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="tr">
 <head>
+    <meta charset="UTF-8">
+    <title>Yapay Zekâ ve Arama Algoritmaları</title>
     <link rel="stylesheet" href="style.css">
     <script src="sudoku.js"></script>
     <script src="card.js"></script>
+    <script src="race.js"></script>
 </head>
-
 <body>
-    <div>
-        <button onclick="showSudoku()">Sudoku Çözücü</button>
-        <button onclick="showCard()">Kart Oyunu</button>
-        <button onclick="restartGame()" id="restart-btn" hidden>Tekrar Oyna</button>
+    <div class="nav-bar">
+        <button class="nav-btn" onclick="showSudoku()">Sudoku Çözücü</button>
+        <button class="nav-btn" onclick="showCard()">Kart Oyunu</button>
+        <button class="nav-btn" onclick="showRace()">Yarış Oyunu</button>
     </div>
 
-    <!-- Sudoku Çözücü -->
+    <!-- 1. SUDOKU ÇÖZÜCÜ -->
     <div id="sudoku" hidden>
         <p>Çözdürmek istediğin sudokunu gir ve anında çözelim!</p>
-        <button class="btn" onclick="solveSudoku()">Çözümü Yap</button>
-        <button class="btn" onclick="resetSudoku()">Sıfırla</button>
+        <div style="text-align: center; margin-bottom: 10px;">
+            <button class="btn" onclick="solveSudoku()">Çözümü Yap</button>
+            <button class="btn" onclick="resetSudoku()">Sıfırla</button>
+        </div>
 
-        <div class="board"> <!-- Bütün Sudoku -->
-
+        <div class="board">
             <!-- 3x3 Karelerin 1. Satırı -->
             <div class="cube">
                 <div class="cell"><input id="r00" type="text" maxlength="1" inputmode="numeric"></div>
@@ -109,7 +111,6 @@
                 <div class="cell"><input id="r82" type="text" maxlength="1" inputmode="numeric"></div>
             </div>
 
-            <!-- Blok 7 (r70 - r78) -->
             <div class="cube">
                 <div class="cell"><input id="r63" type="text" maxlength="1" inputmode="numeric"></div>
                 <div class="cell"><input id="r64" type="text" maxlength="1" inputmode="numeric"></div>
@@ -122,7 +123,6 @@
                 <div class="cell"><input id="r85" type="text" maxlength="1" inputmode="numeric"></div>
             </div>
 
-            <!-- Blok 8 (r80 - r88) -->
             <div class="cube">
                 <div class="cell"><input id="r66" type="text" maxlength="1" inputmode="numeric"></div>
                 <div class="cell"><input id="r67" type="text" maxlength="1" inputmode="numeric"></div>
@@ -137,7 +137,7 @@
         </div>
     </div>
 
-    <!-- Kart Oyunu -->
+    <!-- 2. KART OYUNU -->
     <div id="card-game" hidden>
         <p>Rakibini alt etmek için doğru kartı seç!</p>
 
@@ -148,7 +148,10 @@
             <button class="card" id="p-card4" onclick="SetScore4()">4</button>
         </div>
 
-        <p id="score">SKOR: 0</p>
+        <div class="score-area">
+            <p id="score">SKOR: 0</p>
+            <button class="btn restart-card-btn" onclick="restartGame()" id="restart-btn" hidden>Tekrar Oyna</button>
+        </div>
 
         <div class="enemy-card">
             <button class="card" id="e-card1">1</button>
@@ -158,6 +161,24 @@
         </div>
     </div>
 
-</body>
+    <!-- 3. YARIŞ OYUNU -->
+    <div id="race-container" hidden>
+        <p>Hangi algoritmanın bitişe ilk ulaşacağını tahmin et ve yarışı başlat!</p>
+        
+        <div class="race-controls">
+            <label for="user-bet">Tahminin: </label>
+            <select id="user-bet">
+                <option value="A*">A* (Mavi)</option>
+                <option value="BFS">BFS (Yeşil)</option>
+                <option value="DFS">DFS (Kırmızı)</option>
+                <option value="Dijkstra">Dijkstra (Sarı)</option>
+            </select>
 
+            <button class="btn" onclick="startRace()" id="start-race-btn">Yarışı Başlat</button>
+            <button class="btn" onclick="initMaze()">Yeni Labirent</button>
+        </div>
+
+        <canvas id="mazeCanvas" width="600" height="600"></canvas>
+    </div>
+</body>
 </html>

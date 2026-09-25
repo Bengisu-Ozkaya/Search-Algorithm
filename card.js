@@ -10,7 +10,13 @@ window.addEventListener("DOMContentLoaded", () => {
 
 function showCard() {
     const cardGame = document.getElementById("card-game");
-    cardGame.hidden = !cardGame.hidden
+    const sudoku = document.getElementById("sudoku");
+    const race = document.getElementById("race-container");
+
+    const willShow = cardGame.hidden;
+    if (sudoku) sudoku.hidden = true;
+    if (race) race.hidden = true;
+    cardGame.hidden = !willShow;
 }
 
 function restartGame() {
@@ -24,20 +30,23 @@ function restartGame() {
     StartGame();
 }
 
-function StartGame() {
-    //player için kart
-    playerHand = [];
-    for (let index = 0; index < 4; index++) {
+function generateUniqueHand() {
+    let hand = [];
+    while (hand.length < 4) {
         let random = Math.floor(Math.random() * 10) + 1;
-        playerHand.push(random);
+        if (!hand.includes(random)) {
+            hand.push(random);
+        }
     }
+    return hand;
+}
 
-    // enemy için kart
-    enemyHand = [];
-    for (let index = 0; index < 4; index++) {
-        let random = Math.floor(Math.random() * 10) + 1;
-        enemyHand.push(random);
-    }
+function StartGame() {
+    //player için birbirinden farklı benzersiz kartlar
+    playerHand = generateUniqueHand();
+
+    // enemy için birbirinden farklı benzersiz kartlar
+    enemyHand = generateUniqueHand();
 
     UploadCard();
 

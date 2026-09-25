@@ -3,7 +3,13 @@ let board = []
 
 function showSudoku() {
     const sudoku = document.getElementById("sudoku");
-    sudoku.hidden = !sudoku.hidden
+    const cardGame = document.getElementById("card-game");
+    const race = document.getElementById("race-container");
+
+    const willShow = sudoku.hidden;
+    if (cardGame) cardGame.hidden = true;
+    if (race) race.hidden = true;
+    sudoku.hidden = !willShow;
 }
 
 function resetSudoku() {
