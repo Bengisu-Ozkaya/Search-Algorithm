@@ -153,11 +153,11 @@ function initMaze() {
     grid = [];
 
     if (raceInterval) {
-    clearInterval(raceInterval);
-    isRacing = false;
-    const startBtn = document.getElementById("start-race-btn");
-    if (startBtn) startBtn.disabled = false;
-}
+        clearInterval(raceInterval);
+        isRacing = false;
+        const startBtn = document.getElementById("start-race-btn");
+        if (startBtn) startBtn.disabled = false;
+    }
 
     for (let r = 0; r < ROWS; r++) {
         grid[r] = [];
@@ -182,20 +182,21 @@ let raceInterval = null;
 let isRacing = false;
 
 function startRace() {
-    // Zaten koşan bir yarış varsa baştan başlatmak için durdur
     if (isRacing) {
         clearInterval(raceInterval);
         isRacing = false;
     }
 
-    // 1. Labirent çizgilerini ve noktaları temizleyip yeniden çiz
+    // 1. Ekranı temizle ve labirenti yeniden çiz
     redrawMaze();
 
-    // 2. İki yarışçıyı başlangıç çizgisine (0,0) koy
+    // 2. Dört yarışçıyı da başlangıç çizgisine oturt
     initBFS();
     initDFS();
+    initDijkstra();
+    initAStar();
 
-    // 3. Kullanıcının tahminini al
+    // 3. Kullanıcı tahminini al
     const userBetSelect = document.getElementById("user-bet");
     const userChoice = userBetSelect ? userBetSelect.value : "";
 
@@ -203,33 +204,39 @@ function startRace() {
     const startBtn = document.getElementById("start-race-btn");
     if (startBtn) startBtn.disabled = true;
 
-    // 4. Yarış Motoru: Her 40 milisaniyede 1 adım at (hızı buradan ayarlayabilirsin)
+    // 4. Yarış Döngüsü: Her 35 milisaniyede 4 algoritmadan da birer adım iste
     raceInterval = setInterval(() => {
         let bfsStatus = stepBFS();
         let dfsStatus = stepDFS();
+        let dijkstraStatus = stepDijkstra();
+        let aStarStatus = stepAStar();
 
-        // Hakem Kontrolleri:
-
-        // Senaryo 1: BFS Kazandı
+        // Hakem Kontrolleri: İlk ulaşan kazanır!
+        if (aStarStatus === "kazandı") {
+            finishRace("A* (Mavi)", userChoice);
+            return;
+        }
         if (bfsStatus === "kazandı") {
             finishRace("BFS (Yeşil)", userChoice);
             return;
         }
-
-        // Senaryo 2: DFS Kazandı
         if (dfsStatus === "kazandı") {
             finishRace("DFS (Kırmızı)", userChoice);
             return;
         }
+        if (dijkstraStatus === "kazandı") {
+            finishRace("Dijkstra (Sarı)", userChoice);
+            return;
+        }
 
-        // Senaryo 3: İki algoritma da çıkmazda kaldıysa
-        if (bfsStatus === "yol_yok" && dfsStatus === "yol_yok") {
+        // Dördü de çıkmazda kaldıysa
+        if (bfsStatus === "yol_yok" && dfsStatus === "yol_yok" && dijkstraStatus === "yol_yok" && aStarStatus === "yol_yok") {
             clearInterval(raceInterval);
             isRacing = false;
             if (startBtn) startBtn.disabled = false;
-            alert("Her iki algoritma da çıkışa ulaşamadı!");
+            alert("Hiçbir algoritma çıkışa ulaşamadı!");
         }
-    }, 40);
+    }, 35);
 }
 
 function finishRace(winnerName, userChoice) {
@@ -239,10 +246,11 @@ function finishRace(winnerName, userChoice) {
     const startBtn = document.getElementById("start-race-btn");
     if (startBtn) startBtn.disabled = false;
 
-    // Seçim kontrolü
     let wonBet = false;
+    if (winnerName.includes("A*") && userChoice === "A*") wonBet = true;
     if (winnerName.includes("BFS") && userChoice === "BFS") wonBet = true;
     if (winnerName.includes("DFS") && userChoice === "DFS") wonBet = true;
+    if (winnerName.includes("Dijkstra") && userChoice === "Dijkstra") wonBet = true;
 
     setTimeout(() => {
         if (wonBet) {
@@ -252,7 +260,6 @@ function finishRace(winnerName, userChoice) {
         }
     }, 50);
 }
-
 // Labirent çizgilerini silmeden sadece boyaları temizlemek için yardımcı:
 function redrawMaze() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -298,7 +305,7 @@ function stepBFS() {
     }
 
     // Bulunduğumuz bu kareyi Canvas'ta açık yeşile boya (BFS'nin gezdiği yer)
-    drawCell(r, c, "rgba(46, 204, 113, 0.4)");
+    drawCell(r, c, "rgba(0, 255, 0, 0.4)");
 
     // ŞİMDİ 4 YÖNE BAKIYORUZ: Duvar yoksa ve daha önce gezilmediyse komşuyu kuyruğa ekle!
 
@@ -369,7 +376,7 @@ function stepDFS() {
     }
 
     // Bulunduğumuz bu kareyi Canvas'ta kırmızıya boya (DFS'nin gezdiği yer)
-    drawCell(r, c, "rgba(231, 76, 60, 0.4)");
+    drawCell(r, c, "rgba(255, 0, 0, 0.4)");
 
     // ŞİMDİ 4 YÖNE BAKIYORUZ: Duvar yoksa ve daha önce gezilmediyse komşuyu kuyruğa ekle!
 
@@ -395,6 +402,240 @@ function stepDFS() {
     if (c > 0 && !grid[r][c].walls.left && !dfsVisited[r][c - 1]) {
         dfsVisited[r][c - 1] = true;
         dfsStack.push({ r: r, c: c - 1 });
+    }
+
+    return "devam";
+}
+
+// ==========================================
+// 3. DIJKSTRA ALGORİTMASI (Sarı Yarışçı)
+// Mantık: Her adımda başlangıç noktasına en yakın (maliyeti en düşük) hücreyi seçer.
+// ==========================================
+
+let dijkstraList = [];    // İncelenmeyi bekleyen aday hücreler havuzu (Priority Queue mantığı)
+let dijkstraVisited = []; // Ziyaret edilen hücrelerin 25x25 boolean tablosu
+let dijkstraDist = [];    // Başlangıç noktasından (0,0) her hücreye olan en kısa mesafelerin tablosu
+
+function initDijkstra() {
+    dijkstraList = [];
+    dijkstraVisited = [];
+    dijkstraDist = [];
+
+    // 1. 25x25'lik tabloları oluşturuyoruz
+    for (let r = 0; r < ROWS; r++) {
+        dijkstraVisited[r] = [];
+        dijkstraDist[r] = [];
+        for (let c = 0; c < COLS; c++) {
+            dijkstraVisited[r][c] = false;
+            // Başlangıçta hedefin mesafesini bilmediğimiz için en kötümser değeri (sonsuz) atıyoruz:
+            dijkstraDist[r][c] = Infinity;
+        }
+    }
+
+    // 2. Başlangıç noktasının (0,0) kendine olan mesafesi 0'dır
+    dijkstraDist[0][0] = 0;
+
+    // 3. Listeye sadece başlangıç hücresini nesne olarak ekliyoruz
+    dijkstraList.push({ r: 0, c: 0, dist: 0 });
+}
+
+function stepDijkstra() {
+    // 1. ADIM: İncelenecek hücre kalmadıysa yol yok demektir
+    if (dijkstraList.length === 0) return "yol_yok";
+
+    // 2. ADIM: Listede bekleyenler arasından maliyeti (dist) EN KÜÇÜK olanı bul
+    let minIndex = 0;
+    for (let i = 1; i < dijkstraList.length; i++) {
+        if (dijkstraList[i].dist < dijkstraList[minIndex].dist) {
+            minIndex = i;
+        }
+    }
+
+    // En düşük maliyetli hücreyi listeden çıkarıp alıyoruz (splice diziden silip silineni döner)
+    let current = dijkstraList.splice(minIndex, 1)[0];
+    let r = current.r;
+    let c = current.c;
+
+    // Eğer bu hücre daha önce başka bir koldan işlendiyse pas geç (gereksiz tekrarı önler)
+    if (dijkstraVisited[r][c]) return "devam";
+    dijkstraVisited[r][c] = true;
+
+    // 3. ADIM: Hedefe ulaştık mı kontrolü (Sağ alt köşe: 24, 24)
+    if (r === ROWS - 1 && c === COLS - 1) {
+        return "kazandı";
+    }
+
+    // Bulunduğumuz hücreyi sarı renkle boyuyoruz
+    drawCell(r, c, "rgb(255, 255, 0)");
+
+    // 4. ADIM: Komşuları Gezme ve Maliyet Güncelleme (Relaxation)
+    // Her adım 1 birim mesafe maliyeti taşır
+    let currentDistance = dijkstraDist[r][c];
+
+    // ÜST KOMŞU: Sınır kontrolü + Duvar kontrolü + Ziyaret edilmemiş olma şartı
+    if (r > 0 && !grid[r][c].walls.top && !dijkstraVisited[r - 1][c]) {
+        let newDist = currentDistance + 1;
+        // Eğer bulduğumuz bu yeni yol, komşunun önceden bildiği yoldan daha kısaysa:
+        if (newDist < dijkstraDist[r - 1][c]) {
+            dijkstraDist[r - 1][c] = newDist; // Tabloyu güncelle
+            dijkstraList.push({ r: r - 1, c: c, dist: newDist }); // Listeye ekle
+        }
+    }
+
+    // SAĞ KOMŞU
+    if (c < COLS - 1 && !grid[r][c].walls.right && !dijkstraVisited[r][c + 1]) {
+        let newDist = currentDistance + 1;
+        if (newDist < dijkstraDist[r][c + 1]) {
+            dijkstraDist[r][c + 1] = newDist;
+            dijkstraList.push({ r: r, c: c + 1, dist: newDist });
+        }
+    }
+
+    // ALT KOMŞU
+    if (r < ROWS - 1 && !grid[r][c].walls.bottom && !dijkstraVisited[r + 1][c]) {
+        let newDist = currentDistance + 1;
+        if (newDist < dijkstraDist[r + 1][c]) {
+            dijkstraDist[r + 1][c] = newDist;
+            dijkstraList.push({ r: r + 1, c: c, dist: newDist });
+        }
+    }
+
+    // SOL KOMŞU
+    if (c > 0 && !grid[r][c].walls.left && !dijkstraVisited[r][c - 1]) {
+        let newDist = currentDistance + 1;
+        if (newDist < dijkstraDist[r][c - 1]) {
+            dijkstraDist[r][c - 1] = newDist;
+            dijkstraList.push({ r: r, c: c - 1, dist: newDist });
+        }
+    }
+
+    return "devam";
+}
+
+// ==========================================
+// 4. A* (A-STAR) ALGORİTMASI (Mavi Yarışçı)
+// Mantık: Dijkstra gibi çalışır ama körlemesine yayılmaz.
+// Formülü: f(n) = g(n) + h(n)
+// g(n): Başlangıçtan buraya harcanan gerçek adım sayısı.
+// h(n): Manhattan Sezgisi -> Buradan hedefe kuş uçuşu/ızgara tahmini mesafe.
+// f(n): Toplam tahmini maliyet. Listeden her zaman f değeri EN KÜÇÜK olan seçilir.
+// ==========================================
+
+let aStarList = [];    // İncelenmeyi bekleyen aday hücreler havuzu (Priority Queue)
+let aStarVisited = []; // Ziyaret edilen hücrelerin 25x25 boolean tablosu
+let aStarGScore = [];  // Başlangıçtan (0,0) her hücreye olan en kısa gerçek maliyet matrisi: g(n)
+
+// Sezgi Fonksiyonu (Manhattan Heuristic):
+// Izgara üzerinde çapraz hareket olmadan hedefe kalan tahmini blok mesafesi: |r1 - r2| + |c1 - c2|
+function heuristic(r, c) {
+    const goalR = ROWS - 1; // Hedef Satır: 24
+    const goalC = COLS - 1; // Hedef Sütun: 24
+    return Math.abs(r - goalR) + Math.abs(c - goalC);
+}
+
+function initAStar() {
+    aStarList = [];
+    aStarVisited = [];
+    aStarGScore = [];
+
+    // 1. 25x25'lik tabloları kuruyoruz
+    for (let r = 0; r < ROWS; r++) {
+        aStarVisited[r] = [];
+        aStarGScore[r] = [];
+        for (let c = 0; c < COLS; c++) {
+            aStarVisited[r][c] = false;
+            // Başlangıçta tüm mesafeleri bilinmediği için sonsuz yapıyoruz
+            aStarGScore[r][c] = Infinity;
+        }
+    }
+
+    // 2. Başlangıç noktasının (0,0) kendine olan gerçek mesafesi g(0,0) = 0
+    aStarGScore[0][0] = 0;
+
+    // 3. Başlangıç hücresinin toplam tahmini maliyeti: f = g + h
+    let startH = heuristic(0, 0);
+    let startF = 0 + startH;
+
+    // 4. Listeye başlangıç hücresini g ve f değerleriyle birlikte atıyoruz
+    aStarList.push({ r: 0, c: 0, g: 0, f: startF });
+}
+
+function stepAStar() {
+    // 1. ADIM: Listede incelenecek hücre kalmadıysa yol yok demektir
+    if (aStarList.length === 0) return "yol_yok";
+
+    // 2. ADIM: Listede bekleyenler arasından f değeri (g + h) EN KÜÇÜK olanı bul
+    // Dijkstra'da sadece g'ye (dist) bakıyorduk, A*'da hedefe yönlendiren f değerine bakıyoruz!
+    let minIndex = 0;
+    for (let i = 1; i < aStarList.length; i++) {
+        if (aStarList[i].f < aStarList[minIndex].f) {
+            minIndex = i;
+        }
+    }
+
+    // En düşük f değerine sahip hücreyi listeden çıkarıp alıyoruz
+    let current = aStarList.splice(minIndex, 1)[0];
+    let r = current.r;
+    let c = current.c;
+
+    // Eğer bu hücre daha önce işlendiyse atla
+    if (aStarVisited[r][c]) return "devam";
+    aStarVisited[r][c] = true;
+
+    // 3. ADIM: Hedefe ulaştık mı kontrolü (Sağ alt köşe: 24, 24)
+    if (r === ROWS - 1 && c === COLS - 1) {
+        return "kazandı";
+    }
+
+    // Bulunduğumuz hücreyi Canvas'ta maviye boyuyoruz (A*'ın arama izi)
+    drawCell(r, c, "rgba(52, 152, 219, 0.4)");
+
+    // 4. ADIM: Komşuları Gezme ve Maliyet Hesaplama
+    let currentG = aStarGScore[r][c];
+
+    // --- ÜST KOMŞU ---
+    if (r > 0 && !grid[r][c].walls.top && !aStarVisited[r - 1][c]) {
+        let tentativeG = currentG + 1; // Komşuya gitmenin yeni gerçek maliyeti
+        // Eğer bu yeni yol daha önce bilinen yoldan daha kısaysa:
+        if (tentativeG < aStarGScore[r - 1][c]) {
+            aStarGScore[r - 1][c] = tentativeG;
+            let h = heuristic(r - 1, c); // Hedefe kalan tahmini Manhattan mesafesi
+            let f = tentativeG + h;      // f = g + h
+            aStarList.push({ r: r - 1, c: c, g: tentativeG, f: f });
+        }
+    }
+
+    // --- SAĞ KOMŞU ---
+    if (c < COLS - 1 && !grid[r][c].walls.right && !aStarVisited[r][c + 1]) {
+        let tentativeG = currentG + 1;
+        if (tentativeG < aStarGScore[r][c + 1]) {
+            aStarGScore[r][c + 1] = tentativeG;
+            let h = heuristic(r, c + 1);
+            let f = tentativeG + h;
+            aStarList.push({ r: r, c: c + 1, g: tentativeG, f: f });
+        }
+    }
+
+    // --- ALT KOMŞU ---
+    if (r < ROWS - 1 && !grid[r][c].walls.bottom && !aStarVisited[r + 1][c]) {
+        let tentativeG = currentG + 1;
+        if (tentativeG < aStarGScore[r + 1][c]) {
+            aStarGScore[r + 1][c] = tentativeG;
+            let h = heuristic(r + 1, c);
+            let f = tentativeG + h;
+            aStarList.push({ r: r + 1, c: c, g: tentativeG, f: f });
+        }
+    }
+
+    // --- SOL KOMŞU ---
+    if (c > 0 && !grid[r][c].walls.left && !aStarVisited[r][c - 1]) {
+        let tentativeG = currentG + 1;
+        if (tentativeG < aStarGScore[r][c - 1]) {
+            aStarGScore[r][c - 1] = tentativeG;
+            let h = heuristic(r, c - 1);
+            let f = tentativeG + h;
+            aStarList.push({ r: r, c: c - 1, g: tentativeG, f: f });
+        }
     }
 
     return "devam";
